@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="800" viewBox="0 0 960 800" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 24px; font-weight: 700; fill: #1a1a2e; }
+      .subtitle { font-size: 13px; fill: #6b7280; }
+      .panel-title { font-size: 13px; font-weight: 700; fill: #ffffff; letter-spacing: 1px; }
+      .item-pk { font-size: 11.5px; font-weight: 700; fill: #1d4ed8; font-family: Consolas, Menlo, monospace; }
+      .item-sk { font-size: 11.5px; fill: #0f766e; font-family: Consolas, Menlo, monospace; }
+      .item-gsi { font-size: 11.5px; fill: #c2410c; font-family: Consolas, Menlo, monospace; }
+      .pat { font-size: 12px; fill: #1a1a2e; }
+      .pat-key { font-size: 10.5px; font-weight: 700; }
+      .arrow-label { font-size: 11px; font-style: italic; fill: #6b7280; }
+      .note { font-size: 11.5px; fill: #4b5563; }
+      .anatomy { font-size: 12px; font-family: Consolas, Menlo, monospace; fill: #1a1a2e; }
+      .legend { font-size: 12px; fill: #1a1a2e; }
+    </style>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <polygon points="0,0 9,3 0,6" fill="#334155"/>
+    </marker>
+    <marker id="arr-o" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <polygon points="0,0 9,3 0,6" fill="#c2410c"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="800" rx="16" fill="#f8fafc"/>
+  <text x="480" y="40" text-anchor="middle" class="title">Single-Table Design: shop-data</text>
+  <text x="480" y="62" text-anchor="middle" class="subtitle">one table, overloaded PK/SK, GSI1 as the second door — every access pattern is a Query, never a Scan</text>
+
+  <!-- LEFT: access patterns -->
+  <g>
+    <rect x="20" y="92" width="252" height="470" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="20" y="92" width="252" height="40" rx="12" fill="#16a34a"/>
+    <rect x="20" y="112" width="252" height="20" fill="#16a34a"/>
+    <text x="146" y="117" text-anchor="middle" class="panel-title">ACCESS PATTERNS</text>
+    <g class="pat">
+      <text x="36" y="168"><tspan font-weight="700">1.</tspan> Get user profile</text>
+      <text x="36" y="186" class="pat-key" fill="#1d4ed8">→ base · PK=USER#u-42</text>
+      <text x="36" y="222"><tspan font-weight="700">2.</tspan> List user's orders (newest)</text>
+      <text x="36" y="240" class="pat-key" fill="#1d4ed8">→ base · SK BEGINS_WITH ORDER#</text>
+      <text x="36" y="276"><tspan font-weight="700">3.</tspan> Order + its line items</text>
+      <text x="36" y="294" class="pat-key" fill="#1d4ed8">→ base · SK BEGINS_WITH ORDER#ord-123</text>
+      <text x="36" y="330"><tspan font-weight="700">4.</tspan> All pending orders (any user)</text>
+      <text x="36" y="348" class="pat-key" fill="#c2410c">→ GSI1 · GSI1PK=STATUS#PENDING</text>
+      <text x="36" y="384"><tspan font-weight="700">5.</tspan> User's October 2026 orders</text>
+      <text x="36" y="402" class="pat-key" fill="#1d4ed8">→ base · SK BETWEEN ORDER#2026-10…</text>
+      <text x="36" y="438"><tspan font-weight="700">6.</tspan> Get invoice by id</text>
+      <text x="36" y="456" class="pat-key" fill="#1d4ed8">→ base · PK=INVOICE#inv-9</text>
+      <text x="36" y="500" class="note">Patterns 1,2,3,5,6 hit one</text>
+      <text x="36" y="518" class="note">partition. Pattern 4 is why</text>
+      <text x="36" y="536" class="note">the GSI exists.</text>
+    </g>
+  </g>
+
+  <!-- MIDDLE: base table -->
+  <g>
+    <rect x="300" y="92" width="380" height="470" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="300" y="92" width="380" height="40" rx="12" fill="#4053D6"/>
+    <rect x="300" y="112" width="380" height="20" fill="#4053D6"/>
+    <text x="490" y="117" text-anchor="middle" class="panel-title">BASE TABLE · shop-data</text>
+
+    <!-- header row -->
+    <text x="318" y="158" class="note" font-weight="700">PK</text>
+    <text x="448" y="158" class="note" font-weight="700">SK</text>
+    <text x="620" y="158" class="note" font-weight="700">attributes</text>
+
+    <g>
+      <rect x="308" y="168" width="364" height="52" rx="8" fill="#eff6ff"/>
+      <text x="318" y="189" class="item-pk">USER#u-42</text>
+      <text x="448" y="189" class="item-sk">PROFILE</text>
+      <text x="620" y="189" class="note">name, email,</text>
+      <text x="620" y="205" class="note">order_count</text>
+    </g>
+    <g>
+      <rect x="308" y="228" width="364" height="52" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="318" y="249" class="item-pk">USER#u-42</text>
+      <text x="448" y="249" class="item-sk">ORDER#2026-10#ord-123</text>
+      <text x="620" y="249" class="note">status, total,</text>
+      <text x="620" y="265" class="note">created_at</text>
+    </g>
+    <g>
+      <rect x="308" y="288" width="364" height="52" rx="8" fill="#f0fdfa"/>
+      <text x="318" y="309" class="item-pk">USER#u-42</text>
+      <text x="448" y="309" class="item-sk">ORDER#2026-10#ord-123</text>
+      <text x="448" y="325" class="item-sk">#ITEM#sku-7</text>
+      <text x="620" y="309" class="note">qty, price</text>
+    </g>
+    <g>
+      <rect x="308" y="348" width="364" height="52" rx="8" fill="#f0fdfa"/>
+      <text x="318" y="369" class="item-pk">USER#u-42</text>
+      <text x="448" y="369" class="item-sk">ORDER#2026-10#ord-123</text>
+      <text x="448" y="385" class="item-sk">#ITEM#sku-9</text>
+      <text x="620" y="369" class="note">qty, price</text>
+    </g>
+    <g>
+      <rect x="308" y="408" width="364" height="52" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="318" y="429" class="item-pk">USER#u-42</text>
+      <text x="448" y="429" class="item-sk">ORDER#2026-09#ord-098</text>
+      <text x="620" y="429" class="note">status, total,</text>
+      <text x="620" y="445" class="note">created_at</text>
+    </g>
+    <g>
+      <rect x="308" y="468" width="364" height="52" rx="8" fill="#fefce8"/>
+      <text x="318" y="489" class="item-pk">INVOICE#inv-9</text>
+      <text x="448" y="489" class="item-sk">INVOICE#inv-9</text>
+      <text x="620" y="489" class="note">amount, pdf_url</text>
+    </g>
+
+    <text x="292" y="300" class="arrow-label" text-anchor="end" transform="rotate(-90 292 300)">one partition: USER#u-42</text>
+  </g>
+
+  <!-- RIGHT: GSI1 -->
+  <g>
+    <rect x="708" y="92" width="232" height="470" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <rect x="708" y="92" width="232" height="40" rx="12" fill="#ea580c"/>
+    <rect x="708" y="112" width="232" height="20" fill="#ea580c"/>
+    <text x="824" y="117" text-anchor="middle" class="panel-title">GSI1 · STATUS INDEX</text>
+
+    <text x="724" y="158" class="note" font-weight="700">GSI1PK</text>
+    <text x="724" y="196" class="item-gsi">STATUS#PENDING</text>
+    <text x="724" y="214" class="note">GSI1SK: 2026-10-18T09:12Z</text>
+    <text x="724" y="232" class="note">→ USER#u-42 / ORDER#…ord-123</text>
+
+    <line x1="724" y1="248" x2="924" y2="248" stroke="#e2e8f0"/>
+
+    <text x="724" y="272" class="item-gsi">STATUS#SHIPPED</text>
+    <text x="724" y="290" class="note">GSI1SK: 2026-09-30T14:02Z</text>
+    <text x="724" y="308" class="note">→ USER#u-42 / ORDER#…ord-098</text>
+
+    <line x1="724" y1="324" x2="924" y2="324" stroke="#e2e8f0"/>
+
+    <text x="724" y="352" class="note" font-weight="700">Sparse index:</text>
+    <text x="724" y="370" class="note">only items carrying GSI1PK /</text>
+    <text x="724" y="388" class="note">GSI1SK appear here. No status</text>
+    <text x="724" y="406" class="note">attribute → invisible to GSI1.</text>
+    <text x="724" y="434" class="note">Sort by GSI1SK = newest-</text>
+    <text x="724" y="452" class="note">first pending orders, free.</text>
+
+    <text x="724" y="500" class="note" font-style="italic">eventually consistent —</text>
+    <text x="724" y="518" class="note" font-style="italic">fine for dashboards,</text>
+    <text x="724" y="536" class="note" font-style="italic">not for money.</text>
+  </g>
+
+  <!-- arrows -->
+  <line x1="272" y1="300" x2="298" y2="300" stroke="#334155" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="682" y1="339" x2="706" y2="339" stroke="#c2410c" stroke-width="2" marker-end="url(#arr-o)"/>
+  <text x="285" y="288" text-anchor="middle" class="arrow-label">Query</text>
+  <text x="694" y="327" text-anchor="middle" class="arrow-label">Query</text>
+
+  <!-- BOTTOM: item anatomy -->
+  <g>
+    <rect x="20" y="592" width="920" height="188" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="40" y="622" class="note" font-weight="700" font-size="14">Item anatomy — every item in the table looks like this:</text>
+    <rect x="40" y="640" width="880" height="52" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="60" y="672" class="anatomy"><tspan fill="#1d4ed8" font-weight="700">PK</tspan>  <tspan fill="#0f766e" font-weight="700">SK</tspan>  <tspan fill="#c2410c" font-weight="700">GSI1PK</tspan>  <tspan fill="#c2410c" font-weight="700">GSI1SK</tspan>  <tspan fill="#6b7280">ttl</tspan>  <tspan fill="#6b7280">…entity attributes…</tspan></text>
+    <g class="legend">
+      <rect x="40" y="706" width="14" height="14" rx="3" fill="#1d4ed8"/>
+      <text x="62" y="718">PK = partition placement (what is queried together)</text>
+      <rect x="440" y="706" width="14" height="14" rx="3" fill="#0f766e"/>
+      <text x="462" y="718">SK = entity type + sort order (hierarchical)</text>
+      <rect x="40" y="736" width="14" height="14" rx="3" fill="#c2410c"/>
+      <text x="62" y="748">GSI1PK/GSI1SK = the second door (inverted access)</text>
+      <rect x="440" y="736" width="14" height="14" rx="3" fill="#6b7280"/>
+      <text x="462" y="748">ttl = free auto-delete for sessions, carts, idempotency keys</text>
+    </g>
+  </g>
+</svg>
